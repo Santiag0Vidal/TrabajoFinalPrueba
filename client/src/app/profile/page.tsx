@@ -11,10 +11,7 @@ export default function Profile() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('http://localhost:4000/check-auth', {
-          method: 'GET',
-          credentials: 'include', // Incluye cookies en la solicitud
-        });
+        const res = await fetch('/api/check-auth');
         if (res.ok) {
           setLoading(false);
         } else {
