@@ -1,20 +1,19 @@
-// models/user.js
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 
 const pool = mysql.createPool({
-  host: 'localhost',  // Cambia si tu host es diferente
+  host: 'localhost',
   user: 'root',
-  password: '', // Cambia la contraseña
-  database: 'tu_base_de_datos',  // Nombre de la base de datos
+  password: '',
+  database: 'tu_base_de_datos',
 });
 
 // Función para registrar un usuario
-async function registerUser(username, password) {
+async function registerUser(username, password, email) {
   const hashedPassword = await bcrypt.hash(password, 10); // Encriptar la contraseña
   const [result] = await pool.query(
-    'INSERT INTO users (username, password) VALUES (?, ?)', 
-    [username, hashedPassword]
+    'INSERT INTO users (username, password, email) VALUES (?, ?, ?)', 
+    [username, hashedPassword, email]
   );
   return result;
 }

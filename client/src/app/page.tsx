@@ -1,35 +1,38 @@
-"use client"; // Esto marca el componente como Client Component
+// src/app/page.tsx
+"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  // Hacer la solicitud al backend cuando el componente se monte
-  useEffect(() => {
-    fetch('http://localhost:4000') // URL del backend
-      .then((res) => res.text())
-      .then((data) => {
-        setResult(data); // Almacena la respuesta del backend
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error al conectar con el backend", error);
-        setLoading(false);
-      });
-  }, []);
+  const handleRegister = () => {
+    router.push("/register");
+  };
+
+  const handleLogin = () => {
+    router.push("/login");
+  };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <h1>Conexión con el Backend</h1>
-        {loading ? (
-          <p>Cargando...</p>
-        ) : (
-          <p>{result ? result : "No se recibió respuesta del servidor."}</p>
-        )}
-      </main>
+    <div className="flex flex-col items-center justify-center min-h-screen p-8 gap-8 bg-gray-100">
+      <h1 className="text-4xl font-bold text-gray-900">Bienvenido a Foodbook</h1>
+      <p className="text-lg text-gray-700">Conéctate para explorar y compartir recetas</p>
+      <div className="flex flex-col gap-4">
+        <button
+          onClick={handleRegister}
+          className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300"
+        >
+          Registrarse
+        </button>
+        <button
+          onClick={handleLogin}
+          className="px-6 py-3 bg-green-500 text-white font-semibold rounded-md shadow-md hover:bg-green-600 transition duration-300"
+        >
+          Iniciar sesión
+        </button>
+      </div>
     </div>
   );
 }
