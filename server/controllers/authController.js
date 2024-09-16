@@ -4,6 +4,9 @@ const jwt = require('jsonwebtoken'); // Necesitarás instalar jsonwebtoken
 
 const JWT_SECRET = 'your_secret_key'; // Debes guardar esto en un archivo .env
 
+
+
+
 // Expresiones regulares para validación de email y contraseñas
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/; // Mínimo 8 caracteres, una letra y un número
@@ -11,7 +14,7 @@ const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/; // Mínimo 8 car
 // Registro de usuario
 async function register(ctx) {
   const { username, password, email } = ctx.request.body;
-  
+
   // Validaciones
   if (!emailRegex.test(email)) {
     ctx.status = 400;
@@ -65,7 +68,7 @@ async function login(ctx) {
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
 
     // Configurar cookie de sesión
-    ctx.cookies.set('token', token, { httpOnly: true, maxAge: 3600000 });
+    ctx.cookies.set('token', token, { httpOnly: true, maxAge: 3600000, sameSite: 'None', secure: true });
 
     ctx.status = 200;
     ctx.body = { message: 'Inicio de sesión exitoso' };
@@ -76,23 +79,29 @@ async function login(ctx) {
 }
 
 // Verificar autenticación
-async function checkAuth(ctx) {
-  const token = ctx.cookies.get('token');
-
-  if (!token) {
-    ctx.status = 401;
-    ctx.body = { message: 'No autenticado' };
-    return;
-  }
-
+const checkAuth = async () => {
   try {
-    jwt.verify(token, JWT_SECRET);
-    ctx.status = 200;
-    ctx.body = { message: 'Autenticado' };
-  } catch (err) {
-    ctx.status = 401;
-    ctx.body = { message: 'Token inválido' };
+    const res = await fetch('http://localhost:4000/check-auth', {
+      method: 'GET',
+      credentials: 'include', // Incluye las cookies en la solicitud
+    });
+
+    console.log('Estado de la respuesta:', res.status); // Verifica el estado
+    const data = await res.json(); // Lee el contenido de la respuesta
+    console.log('Contenido de la respuesta:', data);
+
+    if (res.ok) {
+      // Si la respuesta es OK, significa que el usuario está autenticado
+      setLoading(false);
+    } else {
+      // Si no está autenticado, redirige al login
+      router.push('/login');
+    }
+  } catch (error) {
+    console.error("Error al verificar autenticación", error);
+    setError("Error al verificar autenticación");
   }
-}
+};
+
 
 module.exports = { register, login, checkAuth };

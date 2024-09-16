@@ -11,11 +11,21 @@ export default function Profile() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/check-auth');
+        const res = await fetch('http://localhost:4000/check-auth', {
+          method: 'GET',
+          credentials: 'include', // Incluye las cookies en la solicitud
+        });
+        
+        console.log('Estado de la respuesta:', res.status); // Verifica el estado
+        const data = await res.json(); // Lee el contenido de la respuesta
+        console.log('Contenido de la respuesta:', data);
+  
         if (res.ok) {
+          // Si la respuesta es OK, significa que el usuario está autenticado
           setLoading(false);
         } else {
-          router.push('/login'); // Redirige al login si no está autenticado
+          // Si no está autenticado, redirige al login
+          router.push('/login');
         }
       } catch (error) {
         console.error("Error al verificar autenticación", error);
@@ -24,6 +34,7 @@ export default function Profile() {
     };
     checkAuth();
   }, [router]);
+  
 
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;
