@@ -5,8 +5,6 @@ const jwt = require('jsonwebtoken'); // Necesitarás instalar jsonwebtoken
 const JWT_SECRET = 'your_secret_key'; // Debes guardar esto en un archivo .env
 
 
-
-
 // Expresiones regulares para validación de email y contraseñas
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/; // Mínimo 8 caracteres, una letra y un número
@@ -66,42 +64,54 @@ async function login(ctx) {
 
     // Generar token JWT
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
+    // Mostrar el token en la consola para verificar
+    console.log(`El token es: ${token}`);
 
     // Configurar cookie de sesión
-    ctx.cookies.set('token', token, { httpOnly: true, maxAge: 3600000, sameSite: 'None', secure: true });
+    ctx.cookies.set('token', token, {
+      httpOnly: true,
+      maxAge: 3600000, // 1 hora
+      sameSite: 'Lax', // Ajuste para desarrollo
+      secure: false,   // Asegúrate de cambiar esto a true en producción
+    });
+    
+    // Log para verificar si se ejecuta correctamente
+    console.log('Cookie configurada:', ctx.cookies.get('token'));
+   
 
     ctx.status = 200;
     ctx.body = { message: 'Inicio de sesión exitoso' };
   } catch (error) {
+    console.error('Error en el servidor login:', error);
     ctx.status = 500;
-    ctx.body = { message: 'Error en el servidor login', error };
+    ctx.body = { message: 'Error en el servidor login', error: error.message }; // Incluye detalles del error
   }
+  
 }
 
+
 // Verificar autenticación
-const checkAuth = async () => {
-  try {
-    const res = await fetch('http://localhost:4000/check-auth', {
-      method: 'GET',
-      credentials: 'include', // Incluye las cookies en la solicitud
-    });
+async function checkAuth(ctx) {
+  const token = ctx.cookies.get('token');
 
-    console.log('Estado de la respuesta:', res.status); // Verifica el estado
-    const data = await res.json(); // Lee el contenido de la respuesta
-    console.log('Contenido de la respuesta:', data);
-
-    if (res.ok) {
-      // Si la respuesta es OK, significa que el usuario está autenticado
-      setLoading(false);
-    } else {
-      // Si no está autenticado, redirige al login
-      router.push('/login');
-    }
-  } catch (error) {
-    console.error("Error al verificar autenticación", error);
-    setError("Error al verificar autenticación");
+  if (!token) {
+    ctx.status = 401;
+    ctx.body = { message: 'No autenticado' };
+    console.log('TOKEN NO ENCONTRADO');
+    return;
   }
-};
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    ctx.status = 200;
+    ctx.body = { message: 'Autenticado', user: decoded };
+    console.log('Token valid, user:', decoded);
+  } catch (err) {
+    ctx.status = 401;
+    ctx.body = { message: 'Token inválido o expirado' };
+    console.log('Token invalid or expired:', err);
+  }
+}
 
 
 module.exports = { register, login, checkAuth };

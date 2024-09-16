@@ -15,26 +15,33 @@ export default function Profile() {
           method: 'GET',
           credentials: 'include', // Incluye las cookies en la solicitud
         });
-        
-        console.log('Estado de la respuesta:', res.status); // Verifica el estado
-        const data = await res.json(); // Lee el contenido de la respuesta
-        console.log('Contenido de la respuesta:', data);
-  
-        if (res.ok) {
-          // Si la respuesta es OK, significa que el usuario está autenticado
-          setLoading(false);
+
+        // Verifica si el contenido de la respuesta es JSON
+        const contentType = res.headers.get('Content-Type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json(); // Lee el contenido de la respuesta
+          console.log('Contenido de la respuesta:', data);
+          
+          if (res.ok) {
+            // Si la respuesta es OK, significa que el usuario está autenticado
+            setLoading(false);
+          } else {
+            // Si no está autenticado, redirige al login
+            router.push('/login');
+          }
         } else {
-          // Si no está autenticado, redirige al login
-          router.push('/login');
+          // Manejo de errores si la respuesta no es JSON
+          console.error('Respuesta no es JSON:', await res.text());
+          setError('Respuesta no es JSON.');
         }
       } catch (error) {
         console.error("Error al verificar autenticación", error);
         setError("Error al verificar autenticación");
       }
     };
+
     checkAuth();
   }, [router]);
-  
 
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;

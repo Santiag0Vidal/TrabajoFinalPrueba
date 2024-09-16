@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const Koa = require('koa');
 const bodyParser = require('koa-bodyparser');
 const cors = require('@koa/cors');
@@ -5,6 +7,9 @@ const session = require('koa-session');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const app = new Koa();
+
+// Acceder a las variables de entorno
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Configuración de la sesión
 app.keys = ['some secret key']; // Debes usar una clave secreta para firmar las cookies
