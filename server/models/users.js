@@ -18,10 +18,10 @@ async function registerUser(username, password, email) {
   return result;
 }
 
-// Función para obtener un usuario por nombre
+// Función para obtener un usuario por nombre de usuario
 async function getUserByUsername(username) {
   const [rows] = await pool.query(
-    'SELECT * FROM users WHERE username = ?', 
+    'SELECT username, password, email FROM users WHERE username = ?', // Incluye el campo password
     [username]
   );
   return rows[0];

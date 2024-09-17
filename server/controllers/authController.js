@@ -1,9 +1,8 @@
 const userModel = require('../models/users');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); // Necesitarás instalar jsonwebtoken
+const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = 'your_secret_key'; // Debes guardar esto en un archivo .env
-
 
 // Expresiones regulares para validación de email y contraseñas
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,75 +42,77 @@ async function register(ctx) {
   }
 }
 
-// Login de usuario
+
 async function login(ctx) {
   const { username, password } = ctx.request.body;
 
+  if (!username || !password) {
+    ctx.status = 400;
+    ctx.body = { message: 'Username and password are required' };
+    return;
+  }
+
   try {
     const user = await userModel.getUserByUsername(username);
+    console.log('Retrieved user:', user); // Verifica que el usuario y la contraseña estén presentes
+
     if (!user) {
-      ctx.status = 400;
-      ctx.body = { message: 'Usuario no encontrado' };
+      ctx.status = 401;
+      ctx.body = { message: 'Invalid username or password' };
       return;
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
-      ctx.status = 400;
-      ctx.body = { message: 'Contraseña incorrecta' };
-      return;
+    console.log('Password:', password);
+    console.log('User password hash:', user.password);
+
+    const match = await bcrypt.compare(password, user.password);
+    if (match) {
+      const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+      ctx.cookies.set('token', token, {
+        httpOnly: true,
+        maxAge: 3600000,
+        sameSite: 'lax',
+        path: '/',
+      });
+      ctx.status = 200;
+      ctx.body = { message: 'Login successful' };
+    } else {
+      ctx.status = 401;
+      ctx.body = { message: 'Invalid username or password' };
     }
-
-    // Generar token JWT
-    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
-    // Mostrar el token en la consola para verificar
-    console.log(`El token es: ${token}`);
-
-    // Configurar cookie de sesión
-    ctx.cookies.set('token', token, {
-      httpOnly: true,
-      maxAge: 3600000, // 1 hora
-      sameSite: 'Lax', // Ajuste para desarrollo
-      secure: false,   // Asegúrate de cambiar esto a true en producción
-    });
-    
-    // Log para verificar si se ejecuta correctamente
-    console.log('Cookie configurada:', ctx.cookies.get('token'));
-   
-
-    ctx.status = 200;
-    ctx.body = { message: 'Inicio de sesión exitoso' };
   } catch (error) {
-    console.error('Error en el servidor login:', error);
+    console.error('Error en el login:', error);
     ctx.status = 500;
-    ctx.body = { message: 'Error en el servidor login', error: error.message }; // Incluye detalles del error
+    ctx.body = { message: 'Internal server error' };
   }
-  
 }
 
 
-// Verificar autenticación
+// Verificación de autenticación
 async function checkAuth(ctx) {
   const token = ctx.cookies.get('token');
 
   if (!token) {
     ctx.status = 401;
     ctx.body = { message: 'No autenticado' };
-    console.log('TOKEN NO ENCONTRADO');
     return;
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    ctx.status = 200;
-    ctx.body = { message: 'Autenticado', user: decoded };
-    console.log('Token valid, user:', decoded);
+    const user = await userModel.getUserByUsername(decoded.username);
+
+    if (user) {
+      ctx.status = 200;
+      ctx.body = { message: 'Autenticado', user };
+    } else {
+      ctx.status = 404;
+      ctx.body = { message: 'Usuario no encontrado' };
+    }
   } catch (err) {
     ctx.status = 401;
     ctx.body = { message: 'Token inválido o expirado' };
-    console.log('Token invalid or expired:', err);
   }
 }
-
 
 module.exports = { register, login, checkAuth };

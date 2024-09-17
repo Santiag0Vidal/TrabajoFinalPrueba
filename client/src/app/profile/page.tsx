@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,7 +24,8 @@ export default function Profile() {
           console.log('Contenido de la respuesta:', data);
           
           if (res.ok) {
-            // Si la respuesta es OK, significa que el usuario está autenticado
+            // Si la respuesta es OK, guarda los datos del usuario y termina la carga
+            setUser(data.user);
             setLoading(false);
           } else {
             // Si no está autenticado, redirige al login
@@ -50,6 +52,11 @@ export default function Profile() {
     <div className="container mx-auto p-4">
       <h1 className="text-xl mb-4">Bienvenido a tu perfil</h1>
       <p>Has iniciado sesión exitosamente.</p>
+      <div>
+        <h2>Detalles del Usuario</h2>
+        <p><strong>Nombre de Usuario:</strong> {user?.username}</p>
+        <p><strong>Email:</strong> {user?.email}</p>
+      </div>
     </div>
   );
 }

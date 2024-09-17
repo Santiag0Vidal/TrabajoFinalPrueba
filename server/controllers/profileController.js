@@ -1,4 +1,4 @@
-// Función de ejemplo para obtener perfil (puedes ajustarlo según tus necesidades)
+// ProfileController.js
 async function getProfile(ctx) {
     try {
       // Simulación de obtención de perfil (en un caso real, obtendría datos del usuario autenticado)
@@ -11,4 +11,4 @@ async function getProfile(ctx) {
   }
   
   module.exports = { getProfile };
-  
+   
